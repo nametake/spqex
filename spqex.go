@@ -4,23 +4,24 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/parser"
 	"go/printer"
 	"go/token"
 	"os"
 )
 
-func process(path string) error {
+func process(path string) ([]byte, error) {
 	source, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("failed to read file %s: %v", path, err)
+		return nil, fmt.Errorf("failed to read file %s: %v", path, err)
 	}
 
 	fset := token.NewFileSet()
 
 	node, err := parser.ParseFile(fset, path, source, 0)
 	if err != nil {
-		return fmt.Errorf("failed to parse file %s: %v", path, err)
+		return nil, fmt.Errorf("failed to parse file %s: %v", path, err)
 	}
 
 	ast.Inspect(node, func(n ast.Node) bool {
@@ -30,8 +31,13 @@ func process(path string) error {
 
 	var buf bytes.Buffer
 	if err := printer.Fprint(&buf, fset, node); err != nil {
-		return fmt.Errorf("failed to print AST: %v", err)
+		return nil, fmt.Errorf("failed to print AST: %v", err)
 	}
 
-	return nil
+	result, err := format.Source(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to format source: %v", err)
+	}
+
+	return result, nil
 }
