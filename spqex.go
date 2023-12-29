@@ -11,6 +11,54 @@ import (
 	"os"
 )
 
+func findSpannerSQLExpr(node *ast.File) []*ast.BasicLit {
+	basicLitExprs := make([]*ast.BasicLit, 0)
+	ast.Inspect(node, func(n ast.Node) bool {
+		compositeLitExpr, ok := n.(*ast.CompositeLit)
+		if !ok {
+			return true
+		}
+
+		selectorExpr, ok := compositeLitExpr.Type.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+
+		pkgIdent, ok := selectorExpr.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+
+		if pkgIdent.Name != "spanner" && selectorExpr.Sel.Name != "Statement" {
+			return true
+		}
+
+		for _, elt := range compositeLitExpr.Elts {
+			elt, ok := elt.(*ast.KeyValueExpr)
+			if !ok {
+				continue
+			}
+			key, ok := elt.Key.(*ast.Ident)
+			if !ok {
+				continue
+			}
+			if key.Name != "SQL" {
+				continue
+			}
+			value, ok := elt.Value.(*ast.BasicLit)
+			if !ok {
+				continue
+			}
+
+			basicLitExprs = append(basicLitExprs, value)
+		}
+
+		return true
+	})
+
+	return basicLitExprs
+}
+
 func process(path string) ([]byte, error) {
 	source, err := os.ReadFile(path)
 	if err != nil {
@@ -24,10 +72,11 @@ func process(path string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to parse file %s: %v", path, err)
 	}
 
-	ast.Inspect(node, func(n ast.Node) bool {
-		// TODO format and lint
-		return true
-	})
+	basicLitExprs := findSpannerSQLExpr(node)
+
+	for _, basicLitExpr := range basicLitExprs {
+		basicLitExpr.Value = "\"SELECT * FROM TABLE_A;\""
+	}
 
 	var buf bytes.Buffer
 	if err := printer.Fprint(&buf, fset, node); err != nil {
