@@ -9,6 +9,8 @@ import (
 	"go/printer"
 	"go/token"
 	"os"
+	"os/exec"
+	"strings"
 )
 
 func findSpannerSQLExpr(node *ast.File) []*ast.BasicLit {
@@ -59,7 +61,20 @@ func findSpannerSQLExpr(node *ast.File) []*ast.BasicLit {
 	return basicLitExprs
 }
 
-func process(path string) ([]byte, error) {
+func trimQuotes(s string) string {
+	if len(s) < 2 {
+		return s
+	}
+	if s[0] != '"' || s[len(s)-1] != '"' {
+		return s
+	}
+	if s[0] != '`' || s[len(s)-1] != '`' {
+		return s
+	}
+	return s[1 : len(s)-1]
+}
+
+func process(path string, externalCmd string) ([]byte, error) {
 	source, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %v", path, err)
@@ -75,7 +90,14 @@ func process(path string) ([]byte, error) {
 	basicLitExprs := findSpannerSQLExpr(node)
 
 	for _, basicLitExpr := range basicLitExprs {
-		basicLitExpr.Value = "\"SELECT * FROM TABLE_A;\""
+		cmd := exec.Command("sh", "-c", externalCmd)
+
+		cmd.Stdin = strings.NewReader(trimQuotes(basicLitExpr.Value))
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute command %q: %v", externalCmd, err)
+		}
+		basicLitExpr.Value = fmt.Sprintf("`%s`", output)
 	}
 
 	var buf bytes.Buffer

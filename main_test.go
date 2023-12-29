@@ -10,17 +10,19 @@ import (
 func TestProcess(t *testing.T) {
 	tests := []struct {
 		sourceFile string
+		command    string
 		goldenFile string
 	}{
 		{
 			sourceFile: "testdata/format/format.go",
+			command:    "xargs echo -n | gsed -e 's/TABLE/TABLE_A/'",
 			goldenFile: "testdata/format/format_golden.go",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.sourceFile, func(t *testing.T) {
-			result, err := process(test.sourceFile)
+			result, err := process(test.sourceFile, test.command)
 			if err != nil {
 				t.Fatalf("process(%q) returned error %v", test.sourceFile, err)
 			}
