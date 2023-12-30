@@ -2,6 +2,7 @@ package spqex
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -74,7 +75,43 @@ func trimQuotes(s string) string {
 	return s[1 : len(s)-1]
 }
 
-func process(path string, externalCmd string) ([]byte, error) {
+type CommandResult struct {
+	Output   string
+	ExitCode int
+}
+
+func RunCommand(command, sql string) (*CommandResult, error) {
+	cmd := exec.Command("sh", "-c", command)
+	cmd.Stdin = strings.NewReader(sql)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil && !errors.Is(err, &exec.ExitError{}) {
+		return nil, fmt.Errorf("failed to execute command %q: %v", command, err)
+	}
+	exitErr, ok := err.(*exec.ExitError)
+	if ok {
+		return &CommandResult{
+			Output:   string(output),
+			ExitCode: exitErr.ExitCode(),
+		}, nil
+	}
+	return &CommandResult{
+		Output:   string(output),
+		ExitCode: 0,
+	}, nil
+}
+
+type ErrorMessage struct {
+	Message string
+}
+
+type ProcessResult struct {
+	Output        []byte
+	ErrorMessages []*ErrorMessage
+	IsChanged     bool
+}
+
+func process(path string, externalCmd string) (*ProcessResult, error) {
 	source, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %v", path, err)
@@ -89,15 +126,32 @@ func process(path string, externalCmd string) ([]byte, error) {
 
 	basicLitExprs := findSpannerSQLExpr(node)
 
-	for _, basicLitExpr := range basicLitExprs {
-		cmd := exec.Command("sh", "-c", externalCmd)
+	errMessages := make([]*ErrorMessage, 0, len(basicLitExprs))
+	if len(basicLitExprs) == 0 {
+		return &ProcessResult{
+			Output:        []byte{},
+			ErrorMessages: errMessages,
+			IsChanged:     false,
+		}, nil
+	}
 
-		cmd.Stdin = strings.NewReader(trimQuotes(basicLitExpr.Value))
-		output, err := cmd.CombinedOutput()
+	for _, basicLitExpr := range basicLitExprs {
+		r, err := RunCommand(externalCmd, trimQuotes(basicLitExpr.Value))
 		if err != nil {
-			return nil, fmt.Errorf("failed to execute command %q: %v", externalCmd, err)
+			return nil, fmt.Errorf("failed to run command: %v", err)
 		}
-		basicLitExpr.Value = fmt.Sprintf("`%s`", output)
+		if r.ExitCode != 0 {
+			continue
+		}
+		basicLitExpr.Value = fmt.Sprintf("`%s`", r.Output)
+	}
+
+	if len(errMessages) == len(basicLitExprs) {
+		return &ProcessResult{
+			Output:        []byte{},
+			ErrorMessages: errMessages,
+			IsChanged:     false,
+		}, nil
 	}
 
 	var buf bytes.Buffer
@@ -110,5 +164,9 @@ func process(path string, externalCmd string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to format source: %v", err)
 	}
 
-	return result, nil
+	return &ProcessResult{
+		Output:        result,
+		ErrorMessages: errMessages,
+		IsChanged:     true,
+	}, nil
 }
