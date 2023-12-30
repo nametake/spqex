@@ -118,3 +118,21 @@ func TestProcess(t *testing.T) {
 		})
 	}
 }
+
+func TestFindGoFiles(t *testing.T) {
+	files, err := findGoFiles("testdata/filelist")
+	if err != nil {
+		t.Fatalf("findGoFiles(%q) returned unexpected error: %v", "testdata", err)
+	}
+
+	expected := []string{
+		"testdata/filelist/dir/file1.go",
+		"testdata/filelist/file1.go",
+		"testdata/filelist/file2.go",
+	}
+
+	if diff := cmp.Diff(expected, files); diff != "" {
+		t.Errorf("findGoFiles(%q) returned unexpected result (-want +got):\n%s", "testdata", diff)
+	}
+
+}
