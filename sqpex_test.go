@@ -105,6 +105,16 @@ func TestProcess(t *testing.T) {
 				IsChanged:     true,
 			},
 		},
+		{
+			filePath:   "testdata/backquote.go",
+			command:    "xargs echo -n | sed -e 's/TABLE/TABLE_A/'",
+			replace:    true,
+			goldenFile: "testdata/backquote_golden.go",
+			want: &ProcessResult{
+				ErrorMessages: []*ErrorMessage{},
+				IsChanged:     true,
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -144,5 +154,29 @@ func TestFindGoFiles(t *testing.T) {
 	if diff := cmp.Diff(expected, files); diff != "" {
 		t.Errorf("findGoFiles(%q) returned unexpected result (-want +got):\n%s", "testdata", diff)
 	}
+}
 
+func TestTrimQuotes(t *testing.T) {
+	tests := []struct {
+		arg  string
+		want string
+	}{
+		{
+			arg:  `"SELECT * FROM TABLE_A;"`,
+			want: `SELECT * FROM TABLE_A;`,
+		},
+		{
+			arg:  "`SELECT * FROM TABLE_A;`",
+			want: `SELECT * FROM TABLE_A;`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.arg, func(t *testing.T) {
+			got := trimQuotes(test.arg)
+			if got != test.want {
+				t.Errorf("trimQuotes(%q) = %q, want %q", test.arg, got, test.want)
+			}
+		})
+	}
 }
