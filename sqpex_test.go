@@ -16,11 +16,22 @@ func TestProcess(t *testing.T) {
 	}{
 		{
 			filePath:   "testdata/format/format.go",
-			command:    "xargs echo -n | gsed -e 's/TABLE/TABLE_A/'",
+			command:    "xargs echo -n | sed -e 's/TABLE/TABLE_A/'",
 			goldenFile: "testdata/format/format_golden.go",
 			want: &ProcessResult{
 				ErrorMessages: []*ErrorMessage{},
 				IsChanged:     true,
+			},
+		},
+		{
+			filePath:   "testdata/format/has_error.go",
+			command:    "./testdata/format/has_error.sh",
+			goldenFile: "testdata/format/has_error_golden.go",
+			want: &ProcessResult{
+				ErrorMessages: []*ErrorMessage{
+					{Message: "COMMAND ERROR"},
+				},
+				IsChanged: true,
 			},
 		},
 	}

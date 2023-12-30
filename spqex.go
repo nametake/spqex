@@ -81,18 +81,19 @@ type CommandResult struct {
 }
 
 func RunCommand(command, sql string) (*CommandResult, error) {
-	cmd := exec.Command("sh", "-c", command)
+	cmd := exec.Command("bash", "-c", command)
 	cmd.Stdin = strings.NewReader(sql)
 
 	output, err := cmd.CombinedOutput()
-	if err != nil && !errors.Is(err, &exec.ExitError{}) {
+
+	var exitError *exec.ExitError
+	if err != nil && !errors.As(err, &exitError) {
 		return nil, fmt.Errorf("failed to execute command %q: %v", command, err)
 	}
-	exitErr, ok := err.(*exec.ExitError)
-	if ok {
+	if exitError != nil {
 		return &CommandResult{
 			Output:   string(output),
-			ExitCode: exitErr.ExitCode(),
+			ExitCode: exitError.ExitCode(),
 		}, nil
 	}
 	return &CommandResult{
@@ -141,6 +142,9 @@ func process(path string, externalCmd string) (*ProcessResult, error) {
 			return nil, fmt.Errorf("failed to run command: %v", err)
 		}
 		if r.ExitCode != 0 {
+			errMessages = append(errMessages, &ErrorMessage{
+				Message: r.Output,
+			})
 			continue
 		}
 		basicLitExpr.Value = fmt.Sprintf("`%s`", r.Output)
