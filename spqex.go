@@ -137,7 +137,7 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 
 	fset := token.NewFileSet()
 
-	node, err := parser.ParseFile(fset, path, source, 0)
+	node, err := parser.ParseFile(fset, path, source, parser.ParseComments)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %v", path, err)
 	}
@@ -184,12 +184,12 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 
 	var buf bytes.Buffer
 	if err := printer.Fprint(&buf, fset, node); err != nil {
-		return nil, fmt.Errorf("failed to print AST: %v", err)
+		return nil, fmt.Errorf("%s: failed to print AST: %v", path, err)
 	}
 
 	result, err := format.Source(buf.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("failed to format source: %v", err)
+		return nil, fmt.Errorf("%s: failed to format source: %v", path, err)
 	}
 
 	return &ProcessResult{
