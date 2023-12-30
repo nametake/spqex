@@ -130,7 +130,7 @@ func process(path string, externalCmd string) (*ProcessResult, error) {
 	errMessages := make([]*ErrorMessage, 0, len(basicLitExprs))
 	if len(basicLitExprs) == 0 {
 		return &ProcessResult{
-			Output:        []byte{},
+			Output:        nil,
 			ErrorMessages: errMessages,
 			IsChanged:     false,
 		}, nil
@@ -152,7 +152,7 @@ func process(path string, externalCmd string) (*ProcessResult, error) {
 
 	if len(errMessages) == len(basicLitExprs) {
 		return &ProcessResult{
-			Output:        []byte{},
+			Output:        nil,
 			ErrorMessages: errMessages,
 			IsChanged:     false,
 		}, nil

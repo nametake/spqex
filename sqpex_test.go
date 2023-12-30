@@ -34,6 +34,17 @@ func TestProcess(t *testing.T) {
 				IsChanged: true,
 			},
 		},
+		{
+			filePath:   "testdata/format/error_only.go",
+			command:    `echo -n "COMMAND ERROR" 1>&2 && exit 1`,
+			goldenFile: "testdata/format/error_only_golden.go",
+			want: &ProcessResult{
+				ErrorMessages: []*ErrorMessage{
+					{Message: "COMMAND ERROR"},
+				},
+				IsChanged: false,
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -47,7 +58,9 @@ func TestProcess(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to read golden file %s: %v", test.goldenFile, err)
 			}
-			test.want.Output = golden
+			if test.want.IsChanged {
+				test.want.Output = golden
+			}
 
 			if diff := cmp.Diff(test.want, result); diff != "" {
 				t.Errorf("process(%q, %q) returned unexpected result (-want +got):\n%s", test.filePath, test.command, diff)
