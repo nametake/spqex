@@ -154,7 +154,7 @@ func process(path string, externalCmd string, replace bool) (*ProcessResult, err
 		}
 	}
 
-	if len(errMessages) == len(basicLitExprs) {
+	if !replace || len(errMessages) == len(basicLitExprs) {
 		return &ProcessResult{
 			Output:        nil,
 			ErrorMessages: errMessages,

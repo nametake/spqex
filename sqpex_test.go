@@ -26,6 +26,16 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
+			filePath:   "testdata/format.go",
+			command:    "xargs echo -n | sed -e 's/TABLE/TABLE_A/'",
+			replace:    false,
+			goldenFile: "testdata/format_golden.go",
+			want: &ProcessResult{
+				ErrorMessages: []*ErrorMessage{},
+				IsChanged:     false,
+			},
+		},
+		{
 			filePath:   "testdata/has_error.go",
 			command:    "./testdata/has_error.sh",
 			replace:    true,
@@ -41,9 +51,39 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
+			filePath:   "testdata/has_error.go",
+			command:    "./testdata/has_error.sh",
+			replace:    false,
+			goldenFile: "testdata/has_error_golden.go",
+			want: &ProcessResult{
+				ErrorMessages: []*ErrorMessage{
+					{
+						Message: "COMMAND ERROR",
+						PosText: "testdata/has_error.go:16:11",
+					},
+				},
+				IsChanged: false,
+			},
+		},
+		{
 			filePath:   "testdata/error_only.go",
 			command:    `echo -n "COMMAND ERROR" 1>&2 && exit 1`,
 			replace:    true,
+			goldenFile: "testdata/error_only_golden.go",
+			want: &ProcessResult{
+				ErrorMessages: []*ErrorMessage{
+					{
+						Message: "COMMAND ERROR",
+						PosText: "testdata/error_only.go:9:11",
+					},
+				},
+				IsChanged: false,
+			},
+		},
+		{
+			filePath:   "testdata/error_only.go",
+			command:    `echo -n "COMMAND ERROR" 1>&2 && exit 1`,
+			replace:    false,
 			goldenFile: "testdata/error_only_golden.go",
 			want: &ProcessResult{
 				ErrorMessages: []*ErrorMessage{
