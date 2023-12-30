@@ -108,6 +108,10 @@ type ErrorMessage struct {
 	PosText string
 }
 
+func (e *ErrorMessage) String() string {
+	return fmt.Sprintf("%s:\n%s", e.PosText, e.Message)
+}
+
 type ProcessResult struct {
 	Output        []byte
 	ErrorMessages []*ErrorMessage
