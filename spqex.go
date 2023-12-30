@@ -104,6 +104,7 @@ func RunCommand(command, sql string) (*CommandResult, error) {
 
 type ErrorMessage struct {
 	Message string
+	PosText string
 }
 
 type ProcessResult struct {
@@ -112,7 +113,7 @@ type ProcessResult struct {
 	IsChanged     bool
 }
 
-func process(path string, externalCmd string) (*ProcessResult, error) {
+func process(path string, externalCmd string, replace bool) (*ProcessResult, error) {
 	source, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %v", path, err)
@@ -144,10 +145,13 @@ func process(path string, externalCmd string) (*ProcessResult, error) {
 		if r.ExitCode != 0 {
 			errMessages = append(errMessages, &ErrorMessage{
 				Message: r.Output,
+				PosText: fset.Position(basicLitExpr.Pos()).String(),
 			})
 			continue
 		}
-		basicLitExpr.Value = fmt.Sprintf("`%s`", r.Output)
+		if replace {
+			basicLitExpr.Value = fmt.Sprintf("`%s`", r.Output)
+		}
 	}
 
 	if len(errMessages) == len(basicLitExprs) {

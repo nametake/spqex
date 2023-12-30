@@ -11,36 +11,46 @@ func TestProcess(t *testing.T) {
 	tests := []struct {
 		filePath   string
 		command    string
+		replace    bool
 		goldenFile string
 		want       *ProcessResult
 	}{
 		{
-			filePath:   "testdata/format/format.go",
+			filePath:   "testdata/format.go",
 			command:    "xargs echo -n | sed -e 's/TABLE/TABLE_A/'",
-			goldenFile: "testdata/format/format_golden.go",
+			replace:    true,
+			goldenFile: "testdata/format_golden.go",
 			want: &ProcessResult{
 				ErrorMessages: []*ErrorMessage{},
 				IsChanged:     true,
 			},
 		},
 		{
-			filePath:   "testdata/format/has_error.go",
-			command:    "./testdata/format/has_error.sh",
-			goldenFile: "testdata/format/has_error_golden.go",
+			filePath:   "testdata/has_error.go",
+			command:    "./testdata/has_error.sh",
+			replace:    true,
+			goldenFile: "testdata/has_error_golden.go",
 			want: &ProcessResult{
 				ErrorMessages: []*ErrorMessage{
-					{Message: "COMMAND ERROR"},
+					{
+						Message: "COMMAND ERROR",
+						PosText: "testdata/has_error.go:16:11",
+					},
 				},
 				IsChanged: true,
 			},
 		},
 		{
-			filePath:   "testdata/format/error_only.go",
+			filePath:   "testdata/error_only.go",
 			command:    `echo -n "COMMAND ERROR" 1>&2 && exit 1`,
-			goldenFile: "testdata/format/error_only_golden.go",
+			replace:    true,
+			goldenFile: "testdata/error_only_golden.go",
 			want: &ProcessResult{
 				ErrorMessages: []*ErrorMessage{
-					{Message: "COMMAND ERROR"},
+					{
+						Message: "COMMAND ERROR",
+						PosText: "testdata/error_only.go:9:11",
+					},
 				},
 				IsChanged: false,
 			},
@@ -49,7 +59,7 @@ func TestProcess(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.filePath, func(t *testing.T) {
-			result, err := process(test.filePath, test.command)
+			result, err := process(test.filePath, test.command, test.replace)
 			if err != nil {
 				t.Fatalf("process(%q, %q) returned unexpected error: %v", test.filePath, test.command, err)
 			}
