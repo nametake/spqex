@@ -95,6 +95,16 @@ func TestProcess(t *testing.T) {
 				IsChanged: false,
 			},
 		},
+		{
+			filePath:   "testdata/multiline.go",
+			command:    "xargs echo -n | sed -e 's/TABLE/\\nTABLE_A/'",
+			replace:    true,
+			goldenFile: "testdata/multiline_golden.go",
+			want: &ProcessResult{
+				ErrorMessages: []*ErrorMessage{},
+				IsChanged:     true,
+			},
+		},
 	}
 
 	for _, test := range tests {

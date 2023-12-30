@@ -6,7 +6,7 @@ import (
 
 func NoError() *spanner.Statement {
 	return &spanner.Statement{
-		SQL:    `SELECT * FROM TABLE_A;`,
+		SQL:    "SELECT * FROM TABLE_A;",
 		Params: map[string]interface{}{},
 	}
 }

@@ -76,6 +76,10 @@ func trimQuotes(s string) string {
 	return s[1 : len(s)-1]
 }
 
+func hasNewline(s string) bool {
+	return strings.Contains(s, "\n")
+}
+
 type CommandResult struct {
 	Output   string
 	ExitCode int
@@ -155,7 +159,11 @@ func process(path string, externalCmd string, replace bool) (*ProcessResult, err
 			continue
 		}
 		if replace {
-			basicLitExpr.Value = fmt.Sprintf("`%s`", r.Output)
+			if hasNewline(r.Output) {
+				basicLitExpr.Value = fmt.Sprintf("`%s`", r.Output)
+			} else {
+				basicLitExpr.Value = fmt.Sprintf("\"%s\"", r.Output)
+			}
 		}
 	}
 
