@@ -120,7 +120,7 @@ func TestProcess(t *testing.T) {
 }
 
 func TestFindGoFiles(t *testing.T) {
-	files, err := findGoFiles("testdata/filelist")
+	files, err := FindGoFiles("testdata/filelist")
 	if err != nil {
 		t.Fatalf("findGoFiles(%q) returned unexpected error: %v", "testdata", err)
 	}

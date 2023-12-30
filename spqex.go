@@ -184,7 +184,7 @@ func process(path string, externalCmd string, replace bool) (*ProcessResult, err
 	}, nil
 }
 
-func findGoFiles(directory string) ([]string, error) {
+func FindGoFiles(directory string) ([]string, error) {
 	files := make([]string, 0)
 
 	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
