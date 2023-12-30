@@ -11,6 +11,7 @@ import (
 	"go/token"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -177,4 +178,26 @@ func process(path string, externalCmd string, replace bool) (*ProcessResult, err
 		ErrorMessages: errMessages,
 		IsChanged:     true,
 	}, nil
+}
+
+func findGoFiles(directory string) ([]string, error) {
+	files := make([]string, 0)
+
+	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			if info.Name() == "testdata" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if filepath.Ext(path) != ".go" {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("failed to walk directory %s: %v", directory, err)
+	}
+
+	return files, nil
 }
