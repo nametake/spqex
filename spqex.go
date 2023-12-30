@@ -73,6 +73,16 @@ func trimQuotes(s string) string {
 	return s[1 : len(s)-1]
 }
 
+func trimNewline(data []byte) []byte {
+	length := len(data)
+
+	if length > 0 && data[length-1] == '\n' {
+		return data[:length-1]
+	}
+
+	return data
+}
+
 func hasNewline(s string) bool {
 	return strings.Contains(s, "\n")
 }
@@ -94,12 +104,12 @@ func RunCommand(command, sql string) (*CommandResult, error) {
 	}
 	if exitError != nil {
 		return &CommandResult{
-			Output:   string(output),
+			Output:   string(trimNewline(output)),
 			ExitCode: exitError.ExitCode(),
 		}, nil
 	}
 	return &CommandResult{
-		Output:   string(output),
+		Output:   string(trimNewline(output)),
 		ExitCode: 0,
 	}, nil
 }

@@ -97,7 +97,7 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			filePath:   "testdata/multiline.go",
-			command:    "xargs echo -n | sed -e 's/TABLE/\\nTABLE_A/'",
+			command:    "xargs echo -n | sed -e 's/TABLE;/\\nTABLE_A;\\n/'",
 			replace:    true,
 			goldenFile: "testdata/multiline_golden.go",
 			want: &ProcessResult{
