@@ -119,7 +119,7 @@ func TestProcess(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.filePath, func(t *testing.T) {
-			result, err := process(test.filePath, test.command, test.replace)
+			result, err := Process(test.filePath, test.command, test.replace)
 			if err != nil {
 				t.Fatalf("process(%q, %q) returned unexpected error: %v", test.filePath, test.command, err)
 			}

@@ -119,7 +119,7 @@ type ProcessResult struct {
 	IsChanged     bool
 }
 
-func process(path string, externalCmd string, replace bool) (*ProcessResult, error) {
+func Process(path string, externalCmd string, replace bool) (*ProcessResult, error) {
 	source, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %v", path, err)
@@ -157,7 +157,7 @@ func process(path string, externalCmd string, replace bool) (*ProcessResult, err
 		}
 		if replace {
 			if hasNewline(r.Output) {
-				basicLitExpr.Value = fmt.Sprintf("`%s`", r.Output)
+				basicLitExpr.Value = fmt.Sprintf("`\n%s\n`", r.Output)
 			} else {
 				basicLitExpr.Value = fmt.Sprintf("\"%s\"", r.Output)
 			}
