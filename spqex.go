@@ -119,6 +119,11 @@ func trimNewlines(data []byte) []byte {
 	return data
 }
 
+func removeBackquotes(input string) string {
+	result := strings.Replace(input, "`", "", -1)
+	return result
+}
+
 func hasNewline(s string) bool {
 	return strings.Contains(s, "\n")
 }
@@ -212,6 +217,7 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 
 	for _, basicLitExpr := range basicLitExprs {
 		query := trimQuotes(basicLitExpr.Value)
+		query = removeBackquotes(query)
 		r, err := RunCommand(externalCmd, query)
 		if err != nil {
 			return nil, fmt.Errorf("failed to run command: %v", err)
