@@ -127,6 +127,17 @@ func TestProcess(t *testing.T) {
 				IsChanged:     true,
 			},
 		},
+		{
+			filePath:   "testdata/sprintf.go",
+			command:    "xargs echo -n | sed -e 's/TABLE/TABLE_A/'",
+			replace:    true,
+			goldenFile: "testdata/sprintf_golden.go",
+			want: &ProcessResult{
+				File:          "testdata/sprintf.go",
+				ErrorMessages: []*ErrorMessage{},
+				IsChanged:     true,
+			},
+		},
 	}
 
 	for _, test := range tests {

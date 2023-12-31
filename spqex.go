@@ -15,6 +15,40 @@ import (
 	"strings"
 )
 
+func getBasicLitExpr(expr ast.Expr) (*ast.BasicLit, bool) {
+	switch expr := expr.(type) {
+	case *ast.BasicLit:
+		// Direct string literal
+		return expr, true
+	case *ast.CallExpr:
+		// fmt.Sprintf
+		fn, ok := expr.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return nil, false
+		}
+		pkgIdent, ok := fn.X.(*ast.Ident)
+		if !ok {
+			return nil, false
+		}
+		// Check call function is fmt.Sprintf
+		if pkgIdent.Name != "fmt" || fn.Sel.Name != "Sprintf" {
+			return nil, false
+		}
+
+		// Expect first argument is string literal
+		if len(expr.Args) < 1 {
+			return nil, false
+		}
+		argExpr := expr.Args[0]
+		basicLitExpr, ok := argExpr.(*ast.BasicLit)
+		if !ok {
+			return nil, false
+		}
+		return basicLitExpr, true
+	}
+	return nil, false
+}
+
 func findSpannerSQLExpr(node *ast.File) []*ast.BasicLit {
 	basicLitExprs := make([]*ast.BasicLit, 0)
 	ast.Inspect(node, func(n ast.Node) bool {
@@ -49,7 +83,7 @@ func findSpannerSQLExpr(node *ast.File) []*ast.BasicLit {
 			if key.Name != "SQL" {
 				continue
 			}
-			value, ok := elt.Value.(*ast.BasicLit)
+			value, ok := getBasicLitExpr(elt.Value)
 			if !ok {
 				continue
 			}
@@ -141,7 +175,7 @@ func (r *ProcessResult) String() string {
 	for _, msg := range r.ErrorMessages {
 		msgs = append(msgs, msg.String())
 	}
-	return fmt.Sprintf("%s", strings.Join(msgs, "\n\n"))
+	return strings.Join(msgs, "\n\n")
 }
 
 func (r *ProcessResult) ExitCode() int {
