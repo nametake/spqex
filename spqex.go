@@ -130,6 +130,7 @@ func (e *ErrorMessage) String() string {
 }
 
 type ProcessResult struct {
+	File          string
 	Output        []byte
 	ErrorMessages []*ErrorMessage
 	IsChanged     bool
@@ -153,6 +154,7 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 	errMessages := make([]*ErrorMessage, 0, len(basicLitExprs))
 	if len(basicLitExprs) == 0 {
 		return &ProcessResult{
+			File:          path,
 			Output:        nil,
 			ErrorMessages: errMessages,
 			IsChanged:     false,
@@ -184,6 +186,7 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 
 	if !replace || len(errMessages) == len(basicLitExprs) {
 		return &ProcessResult{
+			File:          path,
 			Output:        nil,
 			ErrorMessages: errMessages,
 			IsChanged:     false,
@@ -201,6 +204,7 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 	}
 
 	return &ProcessResult{
+		File:          path,
 		Output:        result,
 		ErrorMessages: errMessages,
 		IsChanged:     true,

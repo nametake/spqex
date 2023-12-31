@@ -21,6 +21,7 @@ func TestProcess(t *testing.T) {
 			replace:    true,
 			goldenFile: "testdata/format_golden.go",
 			want: &ProcessResult{
+				File:          "testdata/format.go",
 				ErrorMessages: []*ErrorMessage{},
 				IsChanged:     true,
 			},
@@ -31,6 +32,7 @@ func TestProcess(t *testing.T) {
 			replace:    false,
 			goldenFile: "testdata/format_golden.go",
 			want: &ProcessResult{
+				File:          "testdata/format.go",
 				ErrorMessages: []*ErrorMessage{},
 				IsChanged:     false,
 			},
@@ -41,6 +43,7 @@ func TestProcess(t *testing.T) {
 			replace:    true,
 			goldenFile: "testdata/has_error_golden.go",
 			want: &ProcessResult{
+				File: "testdata/has_error.go",
 				ErrorMessages: []*ErrorMessage{
 					{
 						Query:   "SELECT * FROM HAS_ERROR;",
@@ -57,6 +60,7 @@ func TestProcess(t *testing.T) {
 			replace:    false,
 			goldenFile: "testdata/has_error_golden.go",
 			want: &ProcessResult{
+				File: "testdata/has_error.go",
 				ErrorMessages: []*ErrorMessage{
 					{
 						Query:   "SELECT * FROM HAS_ERROR;",
@@ -73,6 +77,7 @@ func TestProcess(t *testing.T) {
 			replace:    true,
 			goldenFile: "testdata/error_only_golden.go",
 			want: &ProcessResult{
+				File: "testdata/error_only.go",
 				ErrorMessages: []*ErrorMessage{
 					{
 						Query:   "SELECT * FROM TABLE;",
@@ -89,6 +94,7 @@ func TestProcess(t *testing.T) {
 			replace:    false,
 			goldenFile: "testdata/error_only_golden.go",
 			want: &ProcessResult{
+				File: "testdata/error_only.go",
 				ErrorMessages: []*ErrorMessage{
 					{
 						Query:   "SELECT * FROM TABLE;",
@@ -105,6 +111,7 @@ func TestProcess(t *testing.T) {
 			replace:    true,
 			goldenFile: "testdata/multiline_golden.go",
 			want: &ProcessResult{
+				File:          "testdata/multiline.go",
 				ErrorMessages: []*ErrorMessage{},
 				IsChanged:     true,
 			},
@@ -115,6 +122,7 @@ func TestProcess(t *testing.T) {
 			replace:    true,
 			goldenFile: "testdata/backquote_golden.go",
 			want: &ProcessResult{
+				File:          "testdata/backquote.go",
 				ErrorMessages: []*ErrorMessage{},
 				IsChanged:     true,
 			},
