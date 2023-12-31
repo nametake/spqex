@@ -136,6 +136,21 @@ type ProcessResult struct {
 	IsChanged     bool
 }
 
+func (r *ProcessResult) String() string {
+	msgs := make([]string, 0, len(r.ErrorMessages))
+	for _, msg := range r.ErrorMessages {
+		msgs = append(msgs, msg.String())
+	}
+	return fmt.Sprintf("%s", strings.Join(msgs, "\n\n"))
+}
+
+func (r *ProcessResult) ExitCode() int {
+	if len(r.ErrorMessages) > 0 {
+		return 1
+	}
+	return 0
+}
+
 func Process(path string, externalCmd string, replace bool) (*ProcessResult, error) {
 	source, err := os.ReadFile(path)
 	if err != nil {

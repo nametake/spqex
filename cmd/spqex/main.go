@@ -44,34 +44,45 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := run(dir, *cmd, *mode == "fmt"); err != nil {
-		fmt.Println(err)
+	exitCode, err := run(dir, *cmd, *mode == "fmt")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
+	os.Exit(exitCode)
 }
 
-func run(dir string, cmd string, replace bool) error {
+func run(dir string, cmd string, replace bool) (int, error) {
 	files, err := spqex.FindGoFiles(dir)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	for _, file := range files {
+	exitCode := 0
+	for i, file := range files {
 		result, err := spqex.Process(file, cmd, replace)
 		if err != nil {
-			return err
+			return 0, err
 		}
 
-		for _, msg := range result.ErrorMessages {
-			fmt.Println(msg)
+		code := result.ExitCode()
+		if code != 0 {
+			if i != 0 {
+				fmt.Fprint(os.Stderr, "\n")
+			}
+			fmt.Fprintf(os.Stderr, "%s\n", result)
+		}
+
+		if code > exitCode {
+			exitCode = code
 		}
 
 		if result.IsChanged {
 			if err := os.WriteFile(file, result.Output, 0); err != nil {
-				return fmt.Errorf("failed to write file %s: %v", file, err)
+				return 0, fmt.Errorf("failed to write file %s: %v", file, err)
 			}
 		}
 	}
 
-	return nil
+	return exitCode, nil
 }
