@@ -18,9 +18,10 @@ import (
 func getBasicLitExpr(expr ast.Expr) (*ast.BasicLit, bool) {
 	switch expr := expr.(type) {
 	case *ast.BasicLit:
+		// Direct string literal
 		return expr, true
 	case *ast.CallExpr:
-		// Suport fmt.Sprintf
+		// fmt.Sprintf
 		fn, ok := expr.Fun.(*ast.SelectorExpr)
 		if !ok {
 			return nil, false
@@ -29,9 +30,12 @@ func getBasicLitExpr(expr ast.Expr) (*ast.BasicLit, bool) {
 		if !ok {
 			return nil, false
 		}
+		// Check call function is fmt.Sprintf
 		if pkgIdent.Name != "fmt" || fn.Sel.Name != "Sprintf" {
 			return nil, false
 		}
+
+		// Expect first argument is string literal
 		if len(expr.Args) < 1 {
 			return nil, false
 		}
@@ -79,7 +83,7 @@ func findSpannerSQLExpr(node *ast.File) []*ast.BasicLit {
 			if key.Name != "SQL" {
 				continue
 			}
-			value, ok := elt.Value.(*ast.BasicLit)
+			value, ok := getBasicLitExpr(elt.Value)
 			if !ok {
 				continue
 			}
