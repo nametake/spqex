@@ -73,8 +73,11 @@ func processWorker(index int, file, cmd string, replace bool, resultChan chan *R
 	}
 }
 
-func writeWorker(file string, output []byte, errorChan chan error) {
-
+func writeWorker(file string, output []byte, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if err := os.WriteFile(file, output, 0); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to write file %s: %v\n", file, err)
+	}
 }
 
 func run(dir string, cmd string, replace bool) (int, error) {
@@ -84,17 +87,18 @@ func run(dir string, cmd string, replace bool) (int, error) {
 	}
 
 	resultChan := make(chan *Result)
-
-	wg := &sync.WaitGroup{}
-	for i, file := range files {
-		wg.Add(1)
-		go processWorker(i, file, cmd, replace, resultChan, wg)
-	}
-
+	resultWg := &sync.WaitGroup{}
 	go func() {
-		wg.Wait()
+		resultWg.Wait()
 		close(resultChan)
 	}()
+
+	for i, file := range files {
+		resultWg.Add(1)
+		go processWorker(i, file, cmd, replace, resultChan, resultWg)
+	}
+
+	writeErrWg := &sync.WaitGroup{}
 
 	exitCode := 0
 	for result := range resultChan {
@@ -112,35 +116,12 @@ func run(dir string, cmd string, replace bool) (int, error) {
 			exitCode = code
 		}
 		if result.result.IsChanged {
-			if err := os.WriteFile(result.file, result.result.Output, 0); err != nil {
-				return 0, fmt.Errorf("failed to write file %s: %v", result.file, err)
-			}
+			writeErrWg.Add(1)
+			go writeWorker(result.file, result.result.Output, writeErrWg)
 		}
 	}
-	// for i, file := range files {
-	// 	result, err := spqex.Process(file, cmd, replace)
-	// 	if err != nil {
-	// 		return 0, err
-	// 	}
-	//
-	// 	code := result.ExitCode()
-	// 	if code != 0 {
-	// 		if i != 0 {
-	// 			fmt.Fprint(os.Stderr, "\n")
-	// 		}
-	// 		fmt.Fprintf(os.Stderr, "%s\n", result)
-	// 	}
-	//
-	// 	if code > exitCode {
-	// 		exitCode = code
-	// 	}
-	//
-	// 	if result.IsChanged {
-	// 		if err := os.WriteFile(file, result.Output, 0); err != nil {
-	// 			return 0, fmt.Errorf("failed to write file %s: %v", file, err)
-	// 		}
-	// 	}
-	// }
+
+	writeErrWg.Wait()
 
 	return exitCode, nil
 }
