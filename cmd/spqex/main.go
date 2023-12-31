@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/nametake/spqex"
 )
@@ -52,37 +53,94 @@ func main() {
 	os.Exit(exitCode)
 }
 
+type Result struct {
+	index  int
+	file   string
+	result *spqex.ProcessResult
+	err    error
+}
+
+func processWorker(index int, file, cmd string, replace bool, resultChan chan *Result, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	r, err := spqex.Process(file, cmd, replace)
+
+	resultChan <- &Result{
+		index:  index,
+		file:   file,
+		result: r,
+		err:    err,
+	}
+}
+
+func writeWorker(file string, output []byte, errorChan chan error) {
+
+}
+
 func run(dir string, cmd string, replace bool) (int, error) {
 	files, err := spqex.FindGoFiles(dir)
 	if err != nil {
 		return 0, err
 	}
 
-	exitCode := 0
-	for i, file := range files {
-		result, err := spqex.Process(file, cmd, replace)
-		if err != nil {
-			return 0, err
-		}
+	resultChan := make(chan *Result)
 
-		code := result.ExitCode()
+	wg := &sync.WaitGroup{}
+	for i, file := range files {
+		wg.Add(1)
+		go processWorker(i, file, cmd, replace, resultChan, wg)
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	exitCode := 0
+	for result := range resultChan {
+		if result.err != nil {
+			return 0, result.err
+		}
+		code := result.result.ExitCode()
 		if code != 0 {
-			if i != 0 {
+			if result.index != 0 {
 				fmt.Fprint(os.Stderr, "\n")
 			}
-			fmt.Fprintf(os.Stderr, "%s\n", result)
+			fmt.Fprintf(os.Stderr, "%s\n", result.result)
 		}
-
 		if code > exitCode {
 			exitCode = code
 		}
-
-		if result.IsChanged {
-			if err := os.WriteFile(file, result.Output, 0); err != nil {
-				return 0, fmt.Errorf("failed to write file %s: %v", file, err)
+		if result.result.IsChanged {
+			if err := os.WriteFile(result.file, result.result.Output, 0); err != nil {
+				return 0, fmt.Errorf("failed to write file %s: %v", result.file, err)
 			}
 		}
 	}
+	// for i, file := range files {
+	// 	result, err := spqex.Process(file, cmd, replace)
+	// 	if err != nil {
+	// 		return 0, err
+	// 	}
+	//
+	// 	code := result.ExitCode()
+	// 	if code != 0 {
+	// 		if i != 0 {
+	// 			fmt.Fprint(os.Stderr, "\n")
+	// 		}
+	// 		fmt.Fprintf(os.Stderr, "%s\n", result)
+	// 	}
+	//
+	// 	if code > exitCode {
+	// 		exitCode = code
+	// 	}
+	//
+	// 	if result.IsChanged {
+	// 		if err := os.WriteFile(file, result.Output, 0); err != nil {
+	// 			return 0, fmt.Errorf("failed to write file %s: %v", file, err)
+	// 		}
+	// 	}
+	// }
 
 	return exitCode, nil
 }
