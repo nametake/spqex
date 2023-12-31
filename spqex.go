@@ -73,11 +73,13 @@ func trimQuotes(s string) string {
 	return s[1 : len(s)-1]
 }
 
-func trimNewline(data []byte) []byte {
-	length := len(data)
+func trimNewlines(data []byte) []byte {
+	for len(data) > 0 && (data[0] == '\n' || data[0] == '\r') {
+		data = data[1:]
+	}
 
-	if length > 0 && data[length-1] == '\n' {
-		return data[:length-1]
+	for len(data) > 0 && (data[len(data)-1] == '\n' || data[len(data)-1] == '\r') {
+		data = data[:len(data)-1]
 	}
 
 	return data
@@ -102,14 +104,17 @@ func RunCommand(command, sql string) (*CommandResult, error) {
 	if err != nil && !errors.As(err, &exitError) {
 		return nil, fmt.Errorf("failed to execute command %q: %v", command, err)
 	}
+
+	output = trimNewlines(output)
+
 	if exitError != nil {
 		return &CommandResult{
-			Output:   string(trimNewline(output)),
+			Output:   string(output),
 			ExitCode: exitError.ExitCode(),
 		}, nil
 	}
 	return &CommandResult{
-		Output:   string(trimNewline(output)),
+		Output:   string(output),
 		ExitCode: 0,
 	}, nil
 }
