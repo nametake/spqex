@@ -43,6 +43,7 @@ func TestProcess(t *testing.T) {
 			want: &ProcessResult{
 				ErrorMessages: []*ErrorMessage{
 					{
+						Query:   "SELECT * FROM HAS_ERROR;",
 						Message: "COMMAND ERROR",
 						PosText: "testdata/has_error.go:16:11",
 					},
@@ -58,6 +59,7 @@ func TestProcess(t *testing.T) {
 			want: &ProcessResult{
 				ErrorMessages: []*ErrorMessage{
 					{
+						Query:   "SELECT * FROM HAS_ERROR;",
 						Message: "COMMAND ERROR",
 						PosText: "testdata/has_error.go:16:11",
 					},
@@ -73,6 +75,7 @@ func TestProcess(t *testing.T) {
 			want: &ProcessResult{
 				ErrorMessages: []*ErrorMessage{
 					{
+						Query:   "SELECT * FROM TABLE;",
 						Message: "COMMAND ERROR",
 						PosText: "testdata/error_only.go:9:11",
 					},
@@ -88,6 +91,7 @@ func TestProcess(t *testing.T) {
 			want: &ProcessResult{
 				ErrorMessages: []*ErrorMessage{
 					{
+						Query:   "SELECT * FROM TABLE;",
 						Message: "COMMAND ERROR",
 						PosText: "testdata/error_only.go:9:11",
 					},

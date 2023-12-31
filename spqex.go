@@ -120,12 +120,13 @@ func RunCommand(command, sql string) (*CommandResult, error) {
 }
 
 type ErrorMessage struct {
+	Query   string
 	Message string
 	PosText string
 }
 
 func (e *ErrorMessage) String() string {
-	return fmt.Sprintf("%s:\n%s", e.PosText, e.Message)
+	return fmt.Sprintf("%s:\n%s\n%s", e.PosText, e.Query, e.Message)
 }
 
 type ProcessResult struct {
@@ -159,12 +160,14 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 	}
 
 	for _, basicLitExpr := range basicLitExprs {
-		r, err := RunCommand(externalCmd, trimQuotes(basicLitExpr.Value))
+		query := trimQuotes(basicLitExpr.Value)
+		r, err := RunCommand(externalCmd, query)
 		if err != nil {
 			return nil, fmt.Errorf("failed to run command: %v", err)
 		}
 		if r.ExitCode != 0 {
 			errMessages = append(errMessages, &ErrorMessage{
+				Query:   query,
 				Message: r.Output,
 				PosText: fset.Position(basicLitExpr.Pos()).String(),
 			})
