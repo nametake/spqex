@@ -203,3 +203,35 @@ func TestTrimQuotes(t *testing.T) {
 		})
 	}
 }
+
+func TestFillFormatVerbs(t *testing.T) {
+	tests := []struct {
+		arg  string
+		want string
+	}{
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY %s;",
+			want: "SELECT * FROM TABLE ORDER BY _DUMMY_STRING_;",
+		},
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY %v;",
+			want: "SELECT * FROM TABLE ORDER BY _DUMMY_VALUE_;",
+		},
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY %v %v;",
+			want: "SELECT * FROM TABLE ORDER BY _DUMMY_VALUE_ _DUMMY_VALUE_;",
+		},
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY %s %s;",
+			want: "SELECT * FROM TABLE ORDER BY _DUMMY_STRING_ _DUMMY_STRING_;",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.arg, func(t *testing.T) {
+			got := fillFormatVerbs(test.arg)
+			if got != test.want {
+				t.Errorf("fillFormatSpecifier(%q) = %q, want %q", test.arg, got, test.want)
+			}
+		})
+	}
+}

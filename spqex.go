@@ -190,6 +190,28 @@ func (r *ProcessResult) ExitCode() int {
 	return 0
 }
 
+func fillFormatVerbs(sql string) string {
+	dummyValues := make([]any, 0)
+	isVerb := false
+	for _, char := range sql {
+		if char == '%' {
+			isVerb = true
+		} else if isVerb {
+			switch char {
+			case 'd':
+				dummyValues = append(dummyValues, -1)
+			case 'v':
+				dummyValues = append(dummyValues, "_DUMMY_VALUE_")
+			case 's':
+				dummyValues = append(dummyValues, "_DUMMY_STRING_")
+			}
+			isVerb = false
+		}
+	}
+
+	return fmt.Sprintf(sql, dummyValues...)
+}
+
 func Process(path string, externalCmd string, replace bool) (*ProcessResult, error) {
 	source, err := os.ReadFile(path)
 	if err != nil {
@@ -218,6 +240,7 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 	for _, basicLitExpr := range basicLitExprs {
 		query := trimQuotes(basicLitExpr.Value)
 		query = removeBackquotes(query)
+		query = fillFormatVerbs(query)
 		r, err := RunCommand(externalCmd, query)
 		if err != nil {
 			return nil, fmt.Errorf("failed to run command: %v", err)
