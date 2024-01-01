@@ -212,6 +212,13 @@ func fillFormatVerbs(sql string) string {
 	return fmt.Sprintf(sql, dummyValues...)
 }
 
+func restoreFormatVerbs(sql string) string {
+	sql = strings.ReplaceAll(sql, "-1", "%d")
+	sql = strings.ReplaceAll(sql, "_DUMMY_VALUE_", "%v")
+	sql = strings.ReplaceAll(sql, "_DUMMY_STRING_", "%s")
+	return sql
+}
+
 func Process(path string, externalCmd string, replace bool) (*ProcessResult, error) {
 	source, err := os.ReadFile(path)
 	if err != nil {

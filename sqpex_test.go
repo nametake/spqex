@@ -218,6 +218,10 @@ func TestFillFormatVerbs(t *testing.T) {
 			want: "SELECT * FROM TABLE ORDER BY _DUMMY_VALUE_;",
 		},
 		{
+			arg:  "SELECT * FROM TABLE ORDER BY %d;",
+			want: "SELECT * FROM TABLE ORDER BY -1;",
+		},
+		{
 			arg:  "SELECT * FROM TABLE ORDER BY %v %v;",
 			want: "SELECT * FROM TABLE ORDER BY _DUMMY_VALUE_ _DUMMY_VALUE_;",
 		},
@@ -225,12 +229,56 @@ func TestFillFormatVerbs(t *testing.T) {
 			arg:  "SELECT * FROM TABLE ORDER BY %s %s;",
 			want: "SELECT * FROM TABLE ORDER BY _DUMMY_STRING_ _DUMMY_STRING_;",
 		},
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY %v %s;",
+			want: "SELECT * FROM TABLE ORDER BY _DUMMY_VALUE_ _DUMMY_STRING_;",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.arg, func(t *testing.T) {
 			got := fillFormatVerbs(test.arg)
 			if got != test.want {
-				t.Errorf("fillFormatSpecifier(%q) = %q, want %q", test.arg, got, test.want)
+				t.Errorf("fillFormatVerbs(%q) = %q, want %q", test.arg, got, test.want)
+			}
+		})
+	}
+}
+
+func TestRestoreFormatVerbs(t *testing.T) {
+	tests := []struct {
+		arg  string
+		want string
+	}{
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY _DUMMY_STRING_;",
+			want: "SELECT * FROM TABLE ORDER BY %s;",
+		},
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY _DUMMY_VALUE_;",
+			want: "SELECT * FROM TABLE ORDER BY %v;",
+		},
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY -1;",
+			want: "SELECT * FROM TABLE ORDER BY %d;",
+		},
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY _DUMMY_VALUE_ _DUMMY_VALUE_;",
+			want: "SELECT * FROM TABLE ORDER BY %v %v;",
+		},
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY _DUMMY_STRING_ _DUMMY_STRING_;",
+			want: "SELECT * FROM TABLE ORDER BY %s %s;",
+		},
+		{
+			arg:  "SELECT * FROM TABLE ORDER BY _DUMMY_VALUE_ _DUMMY_STRING_;",
+			want: "SELECT * FROM TABLE ORDER BY %v %s;",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.want, func(t *testing.T) {
+			got := restoreFormatVerbs(test.arg)
+			if got != test.want {
+				t.Errorf("restoreFormatVerbs(%q) = %q, want %q", test.arg, got, test.want)
 			}
 		})
 	}
