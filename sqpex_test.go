@@ -219,7 +219,7 @@ func TestFillFormatVerbs(t *testing.T) {
 		},
 		{
 			arg:  "SELECT * FROM TABLE ORDER BY %d;",
-			want: "SELECT * FROM TABLE ORDER BY -1;",
+			want: "SELECT * FROM TABLE ORDER BY -999;",
 		},
 		{
 			arg:  "SELECT * FROM TABLE ORDER BY %v %v;",
@@ -258,7 +258,7 @@ func TestRestoreFormatVerbs(t *testing.T) {
 			want: "SELECT * FROM TABLE ORDER BY %v;",
 		},
 		{
-			arg:  "SELECT * FROM TABLE ORDER BY -1;",
+			arg:  "SELECT * FROM TABLE ORDER BY -999;",
 			want: "SELECT * FROM TABLE ORDER BY %d;",
 		},
 		{

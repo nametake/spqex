@@ -199,7 +199,7 @@ func fillFormatVerbs(sql string) string {
 		} else if isVerb {
 			switch char {
 			case 'd':
-				dummyValues = append(dummyValues, -1)
+				dummyValues = append(dummyValues, -999)
 			case 'v':
 				dummyValues = append(dummyValues, "_DUMMY_VALUE_")
 			case 's':
@@ -213,7 +213,7 @@ func fillFormatVerbs(sql string) string {
 }
 
 func restoreFormatVerbs(sql string) string {
-	sql = strings.ReplaceAll(sql, "-1", "%d")
+	sql = strings.ReplaceAll(sql, "-999", "%d")
 	sql = strings.ReplaceAll(sql, "_DUMMY_VALUE_", "%v")
 	sql = strings.ReplaceAll(sql, "_DUMMY_STRING_", "%s")
 	return sql
@@ -260,11 +260,12 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 			})
 			continue
 		}
+		output := restoreFormatVerbs(r.Output)
 		if replace {
 			if hasNewline(r.Output) {
-				basicLitExpr.Value = fmt.Sprintf("`\n%s\n`", r.Output)
+				basicLitExpr.Value = fmt.Sprintf("`\n%s\n`", output)
 			} else {
-				basicLitExpr.Value = fmt.Sprintf("\"%s\"", r.Output)
+				basicLitExpr.Value = fmt.Sprintf("\"%s\"", output)
 			}
 		}
 	}
