@@ -103,7 +103,7 @@ func run(dir string, cmd string, replace bool) (int, error) {
 	exitCode := 0
 	for result := range resultChan {
 		if result.err != nil {
-			return 0, result.err
+			fmt.Fprintf(os.Stderr, "failed to process %s: %v\n", result.file, result.err)
 		}
 		code := result.result.ExitCode()
 		if code != 0 {
