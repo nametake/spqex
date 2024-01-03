@@ -283,3 +283,44 @@ func TestRestoreFormatVerbs(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveNewlines(t *testing.T) {
+	tests := []struct {
+		arg  string
+		want string
+	}{
+		{
+			arg:  "SELECT * FROM TABLE;",
+			want: "SELECT * FROM TABLE;",
+		},
+		{
+			arg: `
+SELECT
+  *
+FROM
+  TABLE;
+`,
+			want: "SELECT * FROM TABLE;",
+		},
+		{
+			arg: `
+SELECT
+  *
+FROM
+  TABLE
+ORDER BY
+  CreatedAt;
+`,
+			want: "SELECT * FROM TABLE ORDER BY CreatedAt;",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.arg, func(t *testing.T) {
+			got := removeNewlines(test.arg)
+			if got != test.want {
+				t.Errorf("removeNewlines(%q) = %q, want %q", test.arg, got, test.want)
+			}
+		})
+	}
+}

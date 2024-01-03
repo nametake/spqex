@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -119,9 +120,18 @@ func trimNewlines(data []byte) []byte {
 	return data
 }
 
-func removeBackquotes(input string) string {
-	result := strings.Replace(input, "`", "", -1)
+func removeNewlines(input string) string {
+	// remove multiple spaces
+	re := regexp.MustCompile(`\s{2,}`)
+	result := re.ReplaceAllString(input, " ")
+	// remove newlines
+	result = strings.ReplaceAll(result, "\n", " ")
+	result = strings.TrimSpace(result)
 	return result
+}
+
+func hasBackquotes(input string) bool {
+	return strings.Contains(input, "`")
 }
 
 func hasNewline(s string) bool {
@@ -246,7 +256,6 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 
 	for _, basicLitExpr := range basicLitExprs {
 		query := trimQuotes(basicLitExpr.Value)
-		query = removeBackquotes(query)
 		query = fillFormatVerbs(query)
 		r, err := RunCommand(externalCmd, query)
 		if err != nil {
@@ -262,7 +271,10 @@ func Process(path string, externalCmd string, replace bool) (*ProcessResult, err
 		}
 		output := restoreFormatVerbs(r.Output)
 		if replace {
-			if hasNewline(r.Output) {
+			if hasBackquotes(output) {
+				output = removeNewlines(output)
+				basicLitExpr.Value = fmt.Sprintf("\"%s\"", output)
+			} else if hasNewline(output) {
 				basicLitExpr.Value = fmt.Sprintf("`\n%s\n`", output)
 			} else {
 				basicLitExpr.Value = fmt.Sprintf("\"%s\"", output)
