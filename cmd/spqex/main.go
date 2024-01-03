@@ -9,6 +9,8 @@ import (
 	"github.com/nametake/spqex"
 )
 
+var Version = "dev"
+
 func init() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] directory\n", os.Args[0])
